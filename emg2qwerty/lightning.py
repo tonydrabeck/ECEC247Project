@@ -25,6 +25,7 @@ from emg2qwerty.modules import (
     MultiBandRotationInvariantMLP,
     SpectrogramNorm,
     TDSConvEncoder,
+    GRUEncoder
 )
 from emg2qwerty.transforms import Transform
 
@@ -169,10 +170,17 @@ class TDSConvCTCModule(pl.LightningModule):
             ),
             # (T, N, num_features)
             nn.Flatten(start_dim=2),
-            TDSConvEncoder(
-                num_features=num_features,
-                block_channels=block_channels,
-                kernel_width=kernel_width,
+            # TDSConvEncoder(
+            #     num_features=num_features,
+            #     block_channels=block_channels,
+            #     kernel_width=kernel_width,
+            # ),
+            GRUEncoder(
+                input_size=num_features,       # Same as num_features in TDSConvEncoder
+                hidden_size=768,               # You can adjust this based on your needs
+                num_layers=len(block_channels), # Using the number of TDSConv blocks as GRU layers
+                dropout=0.1,
+                bidirectional=False,           # Set to True if you want bidirectional processing
             ),
             # (T, N, num_classes)
             nn.Linear(num_features, charset().num_classes),
